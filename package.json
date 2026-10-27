@@ -1,0 +1,8 @@
+{
+  "name": "ecommerce-bi-integration",
+  "version": "1.0.0",
+  "description": "ITEC 116 Activity 6: E-commerce transaction ingestion, ETL, BI dashboard and QA KPIs",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}

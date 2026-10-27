@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ITEC 116 | E-Commerce BI</title>
+<style>
+:root{font-family:Inter,Segoe UI,Arial,sans-serif;color:#172033;background:#f4f6fb}*{box-sizing:border-box}body{margin:0}header{background:#14213d;color:white;padding:24px clamp(16px,4vw,48px)}header h1{margin:0 0 6px;font-size:clamp(22px,3vw,32px)}header p{margin:0;color:#dbe4f5}.wrap{max-width:1200px;margin:24px auto;padding:0 18px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.btn{border:0;border-radius:9px;padding:11px 15px;background:#2458d3;color:white;font-weight:700;cursor:pointer}.btn.secondary{background:#e3e9f7;color:#1d2b4f}.btn:hover{filter:brightness(.96)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}.card{background:white;border:1px solid #e3e8f2;border-radius:14px;padding:18px;box-shadow:0 3px 12px #13264a08}.metric{font-size:27px;font-weight:800;margin-top:8px}.muted{color:#66738a;font-size:13px}.section{margin-top:24px}.section h2{font-size:19px}.panel{background:white;border:1px solid #e3e8f2;border-radius:14px;padding:18px;overflow:auto}table{width:100%;border-collapse:collapse;min-width:600px}th,td{text-align:left;padding:11px;border-bottom:1px solid #e8edf5;font-size:13px}th{color:#52617a;background:#f8faff}.status{padding:4px 8px;border-radius:20px;background:#e4f7ec;color:#17663b;font-size:12px}.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.kpi{padding:14px;background:#f8faff;border-radius:10px}.bar{height:8px;background:#e6ebf5;border-radius:8px;overflow:hidden;margin-top:8px}.bar span{display:block;height:100%;background:#2458d3}.message{padding:12px;border-radius:9px;background:#eaf1ff;margin:12px 0;display:none}.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}.formgrid label,.itemrow label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:#52617a}input,select{font:inherit;padding:10px;border:1px solid #cfd8e8;border-radius:8px;background:white;color:#172033;width:100%}.itemrow{display:grid;grid-template-columns:1fr 1.4fr .7fr .8fr .8fr auto;gap:10px;align-items:end;margin:10px 0;padding:12px;background:#f8faff;border-radius:10px}.removeItem{border:0;border-radius:8px;padding:10px;background:#ffe7e7;color:#8d2020;cursor:pointer}.foot{padding:28px 0;color:#6d7890;text-align:center;font-size:12px}@media(max-width:760px){.itemrow{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){header{padding:20px 16px}.metric{font-size:23px}}
+</style></head><body>
+<header><h1>E-Commerce → Business Intelligence</h1><p>ITEC 116 · Group Activity 6 · Transaction ingestion, ETL, dimensional analytics & governance</p></header>
+<main class="wrap">
+<div id="message" class="message"></div>
+<div class="actions"><button class="btn" id="runEtl">Run ETL Pipeline</button><button class="btn secondary" id="refresh">Refresh Dashboard</button><button class="btn secondary" id="export">Export JSON Data</button></div>
+<section class="section"><h2>Track A · Manually Enter an Order</h2><div class="panel">
+<form id="orderForm">
+<div class="formgrid">
+<label>Customer ID <input id="customerId" required placeholder="e.g. C-1001" /></label>
+<label>Transaction ID <input id="transactionId" placeholder="Auto-created if blank" /></label>
+<label>Order Date & Time <input id="orderTimestamp" type="datetime-local" required /></label>
+<label>Status <select id="orderStatus"><option value="completed">Completed</option><option value="pending">Pending</option><option value="checkout">Checkout</option><option value="cancelled">Cancelled</option><option value="refunded">Refunded</option></select></label>
+</div>
+<h3>Line Items</h3><div id="lineItems"></div>
+<div class="actions"><button type="button" class="btn secondary" id="addItem">＋ Add Another Item</button><button type="submit" class="btn">Save Order to BI Staging</button></div>
+<p class="muted">Enter the product details manually. The order total is calculated from quantity × unit price. API token is configured in the JavaScript form handler.</p>
+</form></div></section>
+<div class="grid">
+ <div class="card"><div class="muted">Total Transactions</div><div class="metric" id="transactions">0</div></div>
+ <div class="card"><div class="muted">Completed Orders</div><div class="metric" id="completed">0</div></div>
+ <div class="card"><div class="muted">Completed Sales Revenue</div><div class="metric" id="revenue">₱0.00</div></div>
+ <div class="card"><div class="muted">ETL Fact Rows</div><div class="metric" id="facts">0</div></div>
+</div>
+<section class="section"><h2>Track D · Data Quality & Pipeline KPIs</h2><div class="panel"><div class="kpis">
+<div class="kpi"><b>Ingestion Error Rate</b><div id="errorText">0%</div><div class="bar"><span id="errorBar" style="width:0%"></span></div><p class="muted">Target: ≤ 2%</p></div>
+<div class="kpi"><b>Row Reconciliation Accuracy</b><div id="rowText">100%</div><div class="bar"><span id="rowBar" style="width:100%"></span></div><p class="muted">Target: 100% fact rows vs. expected line items</p></div>
+<div class="kpi"><b>Payload Total Match Rate</b><div id="matchText">100%</div><div class="bar"><span id="matchBar" style="width:100%"></span></div><p class="muted">Target: 100% line-item totals match order totals</p></div>
+</div><p class="muted">ETL latency is measured by the response time shown after running ETL. This demo stores records locally in JSON files.</p></div></section>
+<section class="section"><h2>Recent Storefront Transactions</h2><div class="panel"><table><thead><tr><th>Transaction ID</th><th>Timestamp</th><th>Customer</th><th>Status</th><th>Amount</th><th>Items</th></tr></thead><tbody id="transactionsBody"><tr><td colspan="6">No transactions yet. Generate a demo order to begin.</td></tr></tbody></table></div></section>
+<section class="section"><h2>Track C · Dimensional Model</h2><div class="grid">
+<div class="card"><b>Fact_Sales</b><p class="muted">Transaction, customer, date, product, quantity, unit price, line total, status and optional net margin.</p><div class="metric" id="factCount">0</div><div class="muted">Fact rows</div></div>
+<div class="card"><b>Dim_Customer</b><p class="muted">Unique customer/entity IDs.</p><div class="metric" id="customerCount">0</div><div class="muted">Customer records</div></div>
+<div class="card"><b>Dim_Product</b><p class="muted">Unique product IDs and product names.</p><div class="metric" id="productCount">0</div><div class="muted">Product records</div></div>
+<div class="card"><b>Dim_Time</b><p class="muted">Date key with year, month and day.</p><div class="metric" id="timeCount">0</div><div class="muted">Date records</div></div>
+</div></section>
+<div class="foot">Student lab prototype · Use synthetic/demo data only · API demo token is configurable via BI_API_TOKEN</div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+function money(v){return new Intl.NumberFormat('en-PH',{style:'currency',currency:'PHP'}).format(Number(v||0))}
+function notify(text){$('message').textContent=text;$('message').style.display='block';setTimeout(()=>$('message').style.display='none',5000)}
+async function api(url,opts={}){const r=await fetch(url,{...opts,headers:{'Content-Type':'application/json',...(opts.headers||{})}});const d=await r.json();if(!r.ok)throw new Error(d.error||'Request failed');return d}
+async function refresh(){const d=await api('/api/dashboard'),m=d.metrics;$('transactions').textContent=m.transactions;$('completed').textContent=m.completedOrders;$('revenue').textContent=money(m.revenue);$('facts').textContent=m.factRows;$('factCount').textContent=d.mart.factSales.length;$('customerCount').textContent=d.mart.dimCustomer.length;$('productCount').textContent=d.mart.dimProduct.length;$('timeCount').textContent=d.mart.dimTime.length;
+$('errorText').textContent=m.ingestionErrorRate+'%';$('errorBar').style.width=Math.min(100,m.ingestionErrorRate)+'%';$('rowText').textContent=m.rowReconciliationAccuracy+'%';$('rowBar').style.width=Math.min(100,m.rowReconciliationAccuracy)+'%';$('matchText').textContent=m.payloadTotalMatchRate+'%';$('matchBar').style.width=Math.min(100,m.payloadTotalMatchRate)+'%';
+const body=$('transactionsBody');body.innerHTML='';if(!d.recentTransactions.length){body.innerHTML='<tr><td colspan="6">No transactions yet. Generate a demo order to begin.</td></tr>'}else d.recentTransactions.forEach(t=>{const tr=document.createElement('tr');const vals=[t.transaction_id,new Date(t.timestamp).toLocaleString(),t.entity_id,t.status,money(t.monetary_value),(t.line_items||[]).length];vals.forEach((v,i)=>{const td=document.createElement('td');td.textContent=v;if(i===3){td.innerHTML='';const s=document.createElement('span');s.className='status';s.textContent=v;td.appendChild(s)}tr.appendChild(td)});body.appendChild(tr)})}
+const API_TOKEN = 'itec116-demo-token';
+function addLineItem(seed={}){const row=document.createElement('div');row.className='itemrow';row.innerHTML=`<label>Product ID<input class="pid" required placeholder="P-100" value="${seed.product_id||''}"></label><label>Product Name<input class="pname" required placeholder="Wireless Mouse" value="${seed.name||''}"></label><label>Quantity<input class="qty" type="number" min="1" step="1" required value="${seed.quantity||1}"></label><label>Unit Price (₱)<input class="price" type="number" min="0" step="0.01" required value="${seed.unit_price??''}"></label><label>Unit Cost (₱)<input class="cost" type="number" min="0" step="0.01" placeholder="Optional" value="${seed.unit_cost??''}"></label><button type="button" class="removeItem" title="Remove item">Remove</button>`;row.querySelector('.removeItem').onclick=()=>{if($('lineItems').children.length>1)row.remove();else notify('An order must have at least one line item.')};$('lineItems').appendChild(row)}
+$('addItem').onclick=()=>addLineItem();
+$('orderTimestamp').value=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
+addLineItem();
+$('orderForm').onsubmit=async event=>{event.preventDefault();try{
+ const items=[...$('lineItems').querySelectorAll('.itemrow')].map(row=>{const cost=row.querySelector('.cost').value;return {product_id:row.querySelector('.pid').value.trim(),name:row.querySelector('.pname').value.trim(),quantity:Number(row.querySelector('.qty').value),unit_price:Number(row.querySelector('.price').value),...(cost!==''?{unit_cost:Number(cost)}:{})}});
+ const total=Number(items.reduce((sum,item)=>sum+item.quantity*item.unit_price,0).toFixed(2));
+ const tx={transaction_id:$('transactionId').value.trim()||`ORD-${Date.now()}`,timestamp:new Date($('orderTimestamp').value).toISOString(),entity_id:$('customerId').value.trim(),monetary_value:total,status:$('orderStatus').value,line_items:items};
+ const d=await api('/api/transactions',{method:'POST',headers:{Authorization:`Bearer ${API_TOKEN}`},body:JSON.stringify(tx)});
+ notify(`Order saved successfully: ${d.transaction_id} · Total ${money(total)}. Run ETL to update analytics.`);$('transactionId').value='';$('lineItems').innerHTML='';addLineItem();await refresh();
+ }catch(e){notify('Could not save order: '+e.message)}};
+$('runEtl').onclick=async()=>{const start=performance.now();try{const d=await api('/api/etl/run',{method:'POST',body:'{}'});notify(`${d.message}: ${d.transformedTransactions} transactions, ${d.factRows} fact rows in ${(performance.now()-start).toFixed(1)} ms.`);await refresh()}catch(e){notify(e.message)}};
+$('refresh').onclick=()=>refresh().catch(e=>notify(e.message));
+$('export').onclick=async()=>{try{const d=await api('/api/export');const blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ecommerce-bi-export.json';a.click();URL.revokeObjectURL(a.href)}catch(e){notify(e.message)}};
+refresh().catch(e=>notify(e.message));
+</script></body></html>
